@@ -2,9 +2,7 @@ package main.java.pageEvnts;
 
 public class TestJava2 {
     public static void main(String[] args) {
-
         String s1 = "shashi_134";
-
        String res= s1.substring(s1.indexOf("_")+1, s1.length());
 
         System.out.println(res);
