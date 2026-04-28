@@ -3,8 +3,6 @@ package test.java.CorePractice;
 import java.util.Arrays;
 
 public class MoveZero {
-
-
     public static void main(String[] args) {
 
         int[] nums = {0, 1, 0, 3, 12};
@@ -38,9 +36,7 @@ public class MoveZero {
         System.out.println("Logic for Zero At Begining");
        int count = arr.length-1;
        int size= arr.length-1;
-
        // Iterate e Arrays in Reverse direction//
-
         for(int i =size-1; i>=0; i--){
 
             if(arr[i]!=0) {
