@@ -1,97 +1,97 @@
 package test.java;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.edge.EdgeDriver;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
 
-import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.markuputils.ExtentColor;
 import com.aventstack.extentreports.markuputils.Markup;
 import com.aventstack.extentreports.markuputils.MarkupHelper;
-import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-import com.aventstack.extentreports.reporter.configuration.Theme;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import main.java.utils.Constants;
+import main.java.utils.DriverManager;
+import main.java.utils.ReportManager;
 
+/**
+ * BaseTest - Test lifecycle management (Refactored for SOLID principles)
+ *
+ * SOLID Compliance:
+ * ✅ Single Responsibility: ONLY manages test lifecycle (@Before/@After)
+ * ✅ Open/Closed: Delegates to DriverManager & ReportManager (extensible)
+ * ✅ Dependency Inversion: Depends on abstraction through managers
+ * ✅ Interface Segregation: Focused on one concern
+ *
+ * Design Patterns:
+ * - Singleton: Uses DriverManager & ReportManager singletons
+ * - Template Method: Defines test setup/teardown flow
+ */
 public class BaseTest {
-public static WebDriver driver;
-public  static ExtentTest logger;
-public static ExtentReports extent;
-public static ExtentSparkReporter extentSparkReporter;
+    protected WebDriver driver;
+    protected ExtentTest logger;
 
-  @BeforeTest
-  public void beforeTestMethod(){
-
-    extentSparkReporter  = 
-    new ExtentSparkReporter(System.getProperty("user.dir") + File.separator+"reports"+File.separator+"Automation TestResult");
-    extentSparkReporter.config().setDocumentTitle("Automation REPORTS");
-    extentSparkReporter.config().setReportName("Automation TestResult");
-    extentSparkReporter.config().setTheme(Theme.STANDARD);
-    extent = new ExtentReports();
-    extent.attachReporter(extentSparkReporter);
-    extent.setSystemInfo("Automation Tester", "EII execution");
-
-  }
-  @BeforeMethod
-  @Parameters(value = {"browserName"})
-  public void beforeMethodMethod(String browserName, Method testMethod){
-    logger= extent.createTest(testMethod.getName());
-   setUpDriver(browserName);
-      driver.manage().window().maximize();
-      driver.get(Constants.url);
-      driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-
-
-  }
-
-  @AfterMethod
-  public void afterMethodMethod(){
-
-
-  }
-
-  @AfterTest
-  public void afterTestMethod(ITestResult result){
-  if(result.getStatus()==ITestResult.SUCCESS){
-     String methodName= result.getMethod().getMethodName();
-     String logText= "Test case:"+ methodName+ " Passed";
-Markup m = MarkupHelper.createLabel(logText, ExtentColor.GREEN);
-logger.log(Status.PASS, m);
-
-  } else if(result.getStatus()==ITestResult.FAILURE) {
-    String methodName = result.getMethod().getMethodName();
-
-    String logText = "Test case:"+ methodName+ " Failed";
-    Markup m = MarkupHelper.createLabel(logText, ExtentColor.RED);
-
-logger.log(Status.FAIL, m);
-  }
-  driver.quit();
-
-  }
-
-  public void setUpDriver(String browserName){
-    if(browserName.equalsIgnoreCase("chrome")){
-
-      driver = new ChromeDriver();
-
-    }else if(browserName.equalsIgnoreCase("edge")){
-
-       driver = new EdgeDriver();
-    }
-      else{
-
-        driver = new ChromeDriver();
+    @BeforeTest
+    public void beforeTestMethod() {
+        // Initialize Report Manager (Singleton - only once)
+        ReportManager.getInstance().initializeReport();
     }
 
-  }
+    @BeforeMethod
+    @Parameters(value = {"browserName"})
+    public void beforeMethodMethod(String browserName, Method testMethod) {
+        // Initialize WebDriver using DriverManager (Singleton)
+        DriverManager.getInstance().initializeDriver(browserName);
+        driver = DriverManager.getInstance().getDriver();
+
+        // Create test in report
+        logger = ReportManager.getInstance().createTest(testMethod.getName());
+
+        // Browser setup
+        driver.manage().window().maximize();
+        driver.get(Constants.url);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+    }
+
+    @AfterMethod
+    public void afterMethodMethod() {
+        // Can add cleanup if needed
+    }
+
+    @AfterTest
+    public void afterTestMethod(ITestResult result) {
+        String methodName = result.getMethod().getMethodName();
+        String logText;
+        Status status;
+
+        if (result.getStatus() == ITestResult.SUCCESS) {
+            logText = "Test case: " + methodName + " Passed";
+            status = Status.PASS;
+            Markup m = MarkupHelper.createLabel(logText, ExtentColor.GREEN);
+            logger.log(status, m);
+        } else if (result.getStatus() == ITestResult.FAILURE) {
+            logText = "Test case: " + methodName + " Failed";
+            status = Status.FAIL;
+            Markup m = MarkupHelper.createLabel(logText, ExtentColor.RED);
+            logger.log(status, m);
+        }
+
+        // Cleanup resources
+        DriverManager.getInstance().quitDriver();
+        ReportManager.getInstance().flushReport();
+    }
+
+    /**
+     * Static method for backward compatibility
+     * (Can be removed once all tests extend BaseTest)
+     */
+    @Deprecated(forRemoval = true, since = "2.0")
+    public static WebDriver setUpDriver(String browserName) {
+        DriverManager.getInstance().initializeDriver(browserName);
+        return DriverManager.getInstance().getDriver();
+    }
 
 
 }

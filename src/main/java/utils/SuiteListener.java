@@ -3,13 +3,13 @@ package main.java.utils;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
 import org.testng.IAnnotationTransformer;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 import org.testng.annotations.ITestAnnotation;
 
-import test.java.BaseTest;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -43,13 +43,19 @@ public class SuiteListener implements ITestListener, IAnnotationTransformer{
 
     @Override
     public void onTestFailure(ITestResult result) {
-        // TODO Auto-generated method stub
-        String fileName = System.getProperty("user.dir")+ File.separator+ "screenshots"+ File.separator+ result.getMethod().getMethodName();
-       File file =   ((TakesScreenshot)BaseTest.driver).getScreenshotAs(OutputType.FILE);
-        try {
-            FileUtils.copyFile(file, new File(fileName+".png"));
-        } catch (IOException e) {
-             e.printStackTrace();
+        // Capture screenshot on test failure using DriverManager (Singleton)
+        String fileName = System.getProperty("user.dir") + File.separator + "screenshots" + File.separator + result.getMethod().getMethodName();
+        WebDriver driver = DriverManager.getInstance().getDriver();
+
+        if (driver != null) {
+            File file = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            try {
+                FileUtils.copyFile(file, new File(fileName + ".png"));
+                System.out.println("Screenshot captured: " + fileName + ".png");
+            } catch (IOException e) {
+                System.err.println("Failed to capture screenshot: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 

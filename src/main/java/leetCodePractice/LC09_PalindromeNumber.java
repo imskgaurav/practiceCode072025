@@ -3,7 +3,7 @@ package main.java.leetCodePractice;
 public class LC09_PalindromeNumber {
 
     public static void main(String[] args) {
-        System.out.println("Numbee is PalinDrome:"+isPalindrome(12347321));
+        System.out.println("Number is PalinDrome:"+isPalindrome(12347321));
 
     }
 
